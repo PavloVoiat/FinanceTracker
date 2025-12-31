@@ -260,5 +260,43 @@
         render();
         checkAutoBackup();
     </script>
+    <script>
+// Регистрация Service Worker для работы оффлайн
+if ('serviceWorker' in navigator) {
+    const swCode = `
+        const CACHE_NAME = 'finance-v15';
+        const ASSETS = [
+            './',
+            './index.html',
+            './site.webmanifest',
+            './web-app-manifest-192x192.png',
+            './web-app-manifest-512x512.png',
+            './favicon.ico'
+        ];
+
+        self.addEventListener('install', e => {
+            self.skipWaiting();
+            e.waitUntil(
+                caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+            );
+        });
+
+        self.addEventListener('activate', e => {
+            e.waitUntil(clients.claim());
+        });
+
+        self.addEventListener('fetch', e => {
+            e.respondWith(
+                caches.match(e.request).then(res => res || fetch(e.request))
+            );
+        });
+    `;
+    const blob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).then(() => {
+        console.log('Оффлайн-режим активирован!');
+    });
+}
+    </script>
 </body>
 </html>
